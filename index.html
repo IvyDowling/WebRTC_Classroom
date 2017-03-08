@@ -9,16 +9,21 @@
 <body>
     <div id="videos">
         <video id="localvideoId" autoplay muted></video>
-        <table id="chatTableId" style="float: right; padding-right: 30%;">
-            <th>user</th><th>message</th><tr>
-            <td>michael</td><td>hello!</td><tr>
+        <table id="chatTableId" style="float: right; padding-right: 30%; width: 30%; height: 50%;">
+            <th>user</th>
+            <th>message</th>
+            <tr>
+                <td>michael</td>
+                <td>hello!</td>
+                <tr>
         </table>
     </div>
 
-    <button id="swapsourceId" onclick="swapVideoSource()">Swap Source</button>
+    <button id="swapsourceId" onclick="swapVideoSource()" style="display: none">Swap Source</button>
     <br>
     <input id="browsebuttonId" type="file">
     <br>
+    <button id="joinbuttonId" onclick="join()">Join</button>
     <button id="hangupbuttonId" onclick="hangup()">Quit</button>
 
     <link rel="stylesheet" href="css/style.css">

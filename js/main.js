@@ -1,7 +1,5 @@
 'use strict';
 
-var owner = false;
-var running = false;
 var localStream;
 var remoteStream;
 var pc;
@@ -24,29 +22,23 @@ var socket = io.connect();
 // when the tab is closed, do the stop function
 window.onbeforeunload = stop;
 //set on click
-if ($("#callbuttonId").length > 0) {
-    $("#callbuttonId").click(function() {
-        if ($("#callfieldId").length > 0) {
-            var tocall = $("#callfieldId").val();
-            if (tocall !== null && tocall !== "") {
-                socket.emit('join', tocall);
-                running = false;
-                if (!running && typeof localStream !== 'undefined') {
-                    createPeerConnection();
-                    pc.addStream(localStream);
-                    running = true;
-                    if (owner) {
-                        pc.createOffer(setLocalAndsendSocketMessage,
-                            function(error) {
-                                console.log('Failed to create offer: ' + error.toString());
-                            },
-                            sdpConstraints
-                        );
-                    }
-                }
+function join() {
+    var tocall = prompt("Room Id:");
+    if (tocall !== "") {
+        socket.emit('join', tocall);
+        if (typeof localStream !== 'undefined') {
+            createPeerConnection();
+            pc.addStream(localStream);
+            if (owner) {
+                pc.createOffer(setLocalAndsendSocketMessage,
+                    function(error) {
+                        console.log('Failed to create offer: ' + error.toString());
+                    },
+                    sdpConstraints
+                );
             }
         }
-    });
+    }
 }
 
 if ($("#hangupbuttonId").length > 0) {
@@ -63,9 +55,7 @@ function sendSocketMessage(message) {
 }
 
 // socket receives
-socket.on('created', function(room) {
-    owner = true;
-});
+socket.on('created', function(room) {});
 
 socket.on('join', function(joined) {
     pc.createAnswer().then(
@@ -90,7 +80,6 @@ socket.on('message', function(message) {
         if (!running && typeof localStream !== 'undefined') {
             createPeerConnection();
             pc.addStream(localStream);
-            running = true;
             if (owner) {
                 pc.createOffer(setLocalAndsendSocketMessage,
                     function(error) {
@@ -102,11 +91,9 @@ socket.on('message', function(message) {
         }
     } else if (message.type.type === 'offer') {
         socket.emit('join', clientId);
-        owner = false;
         if (typeof localStream !== 'undefined') {
             createPeerConnection();
             pc.addStream(localStream);
-            running = true;
             if (owner) {
                 pc.createOffer(setLocalAndsendSocketMessage,
                     function(error) {
@@ -138,10 +125,13 @@ socket.on('message', function(message) {
 });
 
 //GetUserMedia
-//here is a good place to do browser checks for ie and safari (not supported)
 navigator.mediaDevices.getUserMedia({
         audio: false,
-        video: true
+        video: {
+            mandatory: {
+                chromeMediaSource: 'screen'
+            }
+        }
     })
     .then(function(stream) {
         $('#localVideo').attr("src", window.URL.createObjectURL(stream));
@@ -210,8 +200,6 @@ function handleRemoteHangup() {
 }
 
 function stop() {
-    running = false;
-    owner = true;
     //if room host, will do nothing
     socket.emit("leave", clientId);
     if (pc !== null && pc !== undefined) {
