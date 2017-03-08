@@ -1,7 +1,6 @@
 'use strict';
 
 var localStream;
-var remoteStream;
 var pc;
 // thanks google
 var pcConfig = {
@@ -76,8 +75,8 @@ socket.on('log', function(array) {
 });
 
 socket.on('message', function(message) {
-    if (message === 'got user media') {
-        if (!running && typeof localStream !== 'undefined') {
+    if (message.content === 'got user media') {
+        if (typeof localStream !== 'undefined') {
             createPeerConnection();
             pc.addStream(localStream);
             if (owner) {
@@ -89,7 +88,7 @@ socket.on('message', function(message) {
                 );
             }
         }
-    } else if (message.type.type === 'offer') {
+    } else if (message.content.type === 'offer') {
         socket.emit('join', clientId);
         if (typeof localStream !== 'undefined') {
             createPeerConnection();
@@ -103,7 +102,7 @@ socket.on('message', function(message) {
                 );
             }
         }
-        pc.setRemoteDescription(new RTCSessionDescription(message.type));
+        pc.setRemoteDescription(new RTCSessionDescription(message.content));
         pc.createAnswer().then(
             setLocalAndsendSocketMessage,
             function(error) {
@@ -111,15 +110,15 @@ socket.on('message', function(message) {
             },
             sdpConstraints
         );
-    } else if (message.type.type === 'answer' && running) {
-        pc.setRemoteDescription(new RTCSessionDescription(message.type));
-    } else if (message.type.type === 'candidate' && running) {
+    } else if (message.content.type === 'answer') {
+        pc.setRemoteDescription(new RTCSessionDescription(message.content));
+    } else if (message.content.type === 'candidate') {
         var candidate = new RTCIceCandidate({
-            sdpMLineIndex: message.type.label,
-            candidate: message.type.candidate
+            sdpMLineIndex: message.content.label,
+            candidate: message.content.candidate
         });
         pc.addIceCandidate(candidate);
-    } else if (message === 'bye' && running) {
+    } else if (message.content === 'bye') {
         handleRemoteHangup();
     }
 });
@@ -134,22 +133,17 @@ navigator.mediaDevices.getUserMedia({
         }
     })
     .then(function(stream) {
-        $('#localVideo').attr("src", window.URL.createObjectURL(stream));
+        $('#localvideoId').attr("src", window.URL.createObjectURL(stream));
         localStream = stream;
         sendSocketMessage('got user media');
-        if (owner && !running && typeof localStream !== 'undefined') {
-            createPeerConnection();
-            pc.addStream(localStream);
-            running = true;
-            if (owner) {
-                pc.createOffer(setLocalAndsendSocketMessage,
-                    function(error) {
-                        console.log('createOffer() error: ', error);
-                    },
-                    sdpConstraints
-                );
-            }
-        }
+        createPeerConnection();
+        pc.addStream(localStream);
+        pc.createOffer(setLocalAndsendSocketMessage,
+            function(error) {
+                console.log('createOffer() error: ', error);
+            },
+            sdpConstraints
+        );
     }).catch(function(e) {
         alert('Error when getting video source: ' + e.name);
     });
@@ -181,8 +175,6 @@ function handleIceCandidate(event) {
 }
 
 function handleRemoteStreamAdded(event) {
-    $('#remoteVideo').attr("src", window.URL.createObjectURL(event.stream));
-    remoteStream = event.stream;
 }
 
 function setLocalAndsendSocketMessage(sessionDescription) {
@@ -190,7 +182,7 @@ function setLocalAndsendSocketMessage(sessionDescription) {
     sendSocketMessage(sessionDescription);
 }
 
-function hangup()
+function hangup() {
     stop();
     sendSocketMessage('bye');
 }
