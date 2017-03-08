@@ -113,7 +113,6 @@ socket.on('message', function(message) {
             }
         }
     } else if (message.type.type === 'offer') {
-        if (confirm("Call from " + message.origin)) {
             socket.emit('join', clientId);
             owner = false;
             if (typeof localStream !== 'undefined') {
@@ -139,7 +138,6 @@ socket.on('message', function(message) {
                 },
                 sdpConstraints
             );
-        }
     } else if (message.type.type === 'answer' && running) {
         pc.setRemoteDescription(new RTCSessionDescription(message.type));
     } else if (message.type.type === 'candidate' && running) {

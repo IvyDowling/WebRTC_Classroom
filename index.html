@@ -8,13 +8,16 @@
 
 <body>
     <div id="videos">
-        <video id="localVideo" autoplay muted></video>
-        <video id="remoteVideo" autoplay></video>
+        <video id="localvideoId" autoplay muted></video>
+        <table id="chatTableId" style="float: right; padding-right: 30%;">
+            <th>user</th><th>message</th><tr>
+            <td>michael</td><td>hello!</td><tr>
+        </table>
     </div>
 
-    <input id="callfieldId" type="text" />
-    <button id="callbuttonId">call</button>
-    <button id="hangupbuttonId">hang up</button>
+    <button id="swapsourceId">Swap Source</button>
+    <br>
+    <input id="browsebuttonId" type="file">
 
     <link rel="stylesheet" href="css/style.css">
     <script src="socket.io/socket.io.js"></script>
