@@ -37,7 +37,10 @@ io.sockets.on('connection', function(client) {
     client.on('message', function(message) {
         log("Client, " + client.id + " said:", message);
         // broadcast sends message to everyone besides this socket
-        var signed = { type: message, origin: client.rooms[0]};
+        var signed = {
+            type: message,
+            origin: client.rooms[0]
+        };
         if (client.visitingRoomName !== null) {
             //we're visiting
             client.broadcast.to(client.visitingRoomName).emit('message', signed);
@@ -70,44 +73,39 @@ io.sockets.on('connection', function(client) {
         if (localRooms[room] !== undefined) {
             //are we in this room
             if (room !== client.rooms[0] && room !== client.rooms[1]) {
-                //will we fit
-                if (localRooms[room].length < 2) {
-                    var exit = client.rooms[1];
-                    if (exit !== undefined) {
-                        log("Client " + client.id + " is leaving room " + exit);
-                        //--Leave current room--
-                        //socket impl
-                        client.leave(client.rooms[1], function() {
-                            console.log("LEAVE-ROOM-CALLBACK: client: " + client.id + " has now left the room " + exit);
-                        });
-                        //leave local room list
-                        if (client.visitingRoomName !== null) {
-                            for (var c = 0; c < localRooms[client.visitingRoomName].length; c++) {
-                                if (localRooms[client.visitingRoomName][c].id === client.id) {
-                                    localRooms[client.visitingRoomName].splice(c, 1);
-                                }
+                var exit = client.rooms[1];
+                if (exit !== undefined) {
+                    log("Client " + client.id + " is leaving room " + exit);
+                    //--Leave current room--
+                    //socket impl
+                    client.leave(client.rooms[1], function() {
+                        console.log("LEAVE-ROOM-CALLBACK: client: " + client.id + " has now left the room " + exit);
+                    });
+                    //leave local room list
+                    if (client.visitingRoomName !== null) {
+                        for (var c = 0; c < localRooms[client.visitingRoomName].length; c++) {
+                            if (localRooms[client.visitingRoomName][c].id === client.id) {
+                                localRooms[client.visitingRoomName].splice(c, 1);
                             }
                         }
                     }
-                    //--Join room--
-                    log("Client " + client.id + " is joining room " + room);
-                    localRooms[room].push(client);
-                    //  lets save a local hook to the room we'll be in
-                    //  this will help us quit that room on hangup
-                    //  "visitingRoomName"
-                    client.visitingRoomName = room;
-                    client.join(room, function() {
-                        console.log("JOIN-ROOM-CALLBACK: client: " + client.id + "has joined room " + room);
-                        log('Client ID ' + client.id + ' joined clientId ' + room);
-                        // emit to everyone on this socket the person who
-                        // just joined, this is for callerid
-                        io.sockets.in(room).emit('join', inMyRoom());
-                        client.emit('joined', room, client.id);
-                        io.sockets.in(room).emit('ready');
-                    });
-                } else { // max two clients
-                    client.emit('full', room);
                 }
+                //--Join room--
+                log("Client " + client.id + " is joining room " + room);
+                localRooms[room].push(client);
+                //  lets save a local hook to the room we'll be in
+                //  this will help us quit that room on hangup
+                //  "visitingRoomName"
+                client.visitingRoomName = room;
+                client.join(room, function() {
+                    console.log("JOIN-ROOM-CALLBACK: client: " + client.id + "has joined room " + room);
+                    log('Client ID ' + client.id + ' joined clientId ' + room);
+                    // emit to everyone on this socket the person who
+                    // just joined, this is for callerid
+                    io.sockets.in(room).emit('join', inMyRoom());
+                    client.emit('joined', room, client.id);
+                    io.sockets.in(room).emit('ready');
+                });
             } else {
                 log("client " + client.id + " attempted to join room they're in.");
             }
@@ -143,15 +141,4 @@ io.sockets.on('connection', function(client) {
 
     });
      */
-
-    client.on('ipaddr', function() {
-        var ifaces = os.networkInterfaces();
-        for (var dev in ifaces) {
-            ifaces[dev].forEach(function(details) {
-                if (details.family === 'IPv4' && details.address !== '127.0.0.1') {
-                    client.emit('ipaddr', details.address);
-                }
-            });
-        }
-    });
 });
